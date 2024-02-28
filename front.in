@@ -1,1 +1,48 @@
-(sum+78)/total 
+// Using each token defined
+
+// Integer literal
+int num = 123;
+
+// Identifier
+int x;
+
+// Assignment operation
+x = 10;
+
+// Arithmetic operations
+int result = x + num - 5 * 2 / 3;
+
+// Parentheses
+int expression = (x + num) * 2;
+
+// Control flow statements
+if (x == 10) {
+    printf("x is equal to 10\n");
+} else {
+    printf("x is not equal to 10\n");
+}
+
+// Looping statements
+for (int i = 0; i < 5; i++) {
+    printf("Iteration %d\n", i);
+}
+
+// Other reserved words
+while (x < 100) {
+    x++;
+}
+
+do {
+    printf("This will be printed at least once\n");
+} while (x < 50);
+
+switch (x) {
+    case 1:
+        printf("x is 1\n");
+        break;
+    case 2:
+        printf("x is 2\n");
+        break;
+    default:
+        printf("x is neither 1 nor 2\n");
+}

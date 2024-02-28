@@ -14,10 +14,12 @@ int nextToken;
 FILE *in_fp, *fopen();
 
 /* Function declarations */
-void addChar();
-void getChar();
-void getNonBlank();
-int lex();
+void addChar(); 	// Function to add a character to the current lexeme
+void getChar(); 	// Function to get the next character from the input file
+void getNonBlank(); // Function to skip any whitespace characters
+int lex();          // Function to perform lexical analysis and recognize tokens
+
+int lookupReservedWords(char* lexeme); //Step 4: function prototype, Function to lookup reserved words
 
 /* Character classes */
 #define LETTER 0
@@ -42,6 +44,14 @@ int lex();
 #define LEFT_BRACE 34
 #define RIGHT_BRACE 35
 
+#define IF_CODE 36       //STEP 4: New token codes for reserved words
+#define ELSE_CODE 37
+#define WHILE_CODE 38
+#define DO_CODE 39
+#define INT_CODE 40
+#define FLOAT_CODE 41
+#define SWITCH_CODE 42   //make sure each token has unquie ID
+
 
 /*************************************/
 /* main driver */
@@ -50,22 +60,46 @@ int main(){
     printf("Enter the filename: ");
     scanf("%s", filename); // Read filename from keyboard
     if ((in_fp = fopen(filename, "r")) == NULL) {
-        fprintf(stderr, "ERROR - cannot open %s\n", filename);
+        fprintf(stderr, "ERROR - cannot open %s\n", filename); //----------
 	}
-	else{
-		getChar();
+	else{ 
+		getChar(); // Get the first character from the file
 		do{
-			lex();
-		} while(nextToken != EOF);
+			lex(); // analize lexeme
+		} while(nextToken != EOF); // Continue until end of file
 	}
 	return 0;
 }
 
+
+
+int lookupReservedWords(char *lexeme) {  //Check if lexeme is a reserved word
+    if (strcmp(lexeme, "for") == 0)  //strcmp, compares lexeme and hard coded string; this case "for"
+        return FOR_CODE;
+    else if (strcmp(lexeme, "if") == 0)
+        return IF_CODE;
+    else if (strcmp(lexeme, "else") == 0)
+        return ELSE_CODE;
+    else if (strcmp(lexeme, "while") == 0)
+        return WHILE_CODE;
+    else if (strcmp(lexeme, "do") == 0)
+        return DO_CODE;
+    else if (strcmp(lexeme, "int") == 0)
+        return INT_CODE;
+    else if (strcmp(lexeme, "float") == 0)
+        return FLOAT_CODE;
+    else if (strcmp(lexeme, "switch") == 0)
+        return SWITCH_CODE;
+    else
+        return 0; // Indicating not a reserved word. Handling defaulting to IDENT in lex() function
+}
+
+
 int lookup(char ch) {
 	switch(ch) {
-		case '(':
-			addChar();
-			nextToken = LEFT_PAREN;
+		case '(':                   //if char is (
+			addChar();              //add char to lexeme
+			nextToken = LEFT_PAREN; //assign nextToken
 			break;
 		case ')':
 			addChar();
@@ -107,7 +141,7 @@ int lookup(char ch) {
             addChar();
             nextToken = RIGHT_BRACE;
             break;
-		default:
+		default:                   //no more characters, end of file
 			addChar();
 			nextToken = EOF;
 			break;
@@ -116,9 +150,9 @@ int lookup(char ch) {
 }
 
 void addChar(){
-	if(lexLen <= 98){
-		lexeme[lexLen++] = nextChar;
-		lexeme[lexLen] = 0;
+	if(lexLen <= 98){  					//check if buffer is big enough
+		lexeme[lexLen++] = nextChar; 	//add char to buffer
+		lexeme[lexLen] = 0; 			//0 to end lexeme
 	}
 	else
 		printf("Error - lexeme is too long \n");
@@ -126,16 +160,16 @@ void addChar(){
 
 void getChar() {
 
-	if((nextChar = getc(in_fp)) != EOF){
+	if((nextChar = getc(in_fp)) != EOF){ //check if theres more char in the file
 
-		if(isalpha(nextChar))
+		if(isalpha(nextChar))   //if char is a letter
 			charClass = LETTER;
-		else if(isdigit(nextChar))
+		else if(isdigit(nextChar))  //if car is digit
 			charClass = DIGIT;
-		else charClass = UNKNOWN;
+		else charClass = UNKNOWN;   //neither its Unknown
 	}
 	else
-		charClass = EOF;
+		charClass = EOF; //end of file
 }
 
 void getNonBlank() {
@@ -147,46 +181,45 @@ void getNonBlank() {
 }
 
 int lex() {
-	lexLen = 0;
-	getNonBlank();
-	switch(charClass){
-		case LETTER:
-			addChar();
-			getChar();
-			while(charClass == LETTER || charClass == DIGIT){
-				addChar();
-				getChar();
-			}
-			nextToken = IDENT;
-			break;
-		case DIGIT:
-			addChar();
-			getChar();
-			while(charClass == DIGIT){
-				addChar();
-				getChar();
-			}
-			nextToken = INT_LIT;
-			break;
-		case UNKNOWN:
-			lookup(nextChar);
-			getChar();
-			break;
-		case EOF:
-			nextToken = EOF; //-1
-			lexeme[0] = 'E';
-			lexeme[1] = 'O';
-			lexeme[2] = 'F';
-			lexeme[3] = 0;
-			break;
-	}
+    lexLen = 0;
+    getNonBlank();
+    switch (charClass) {
+        case LETTER:
+            addChar();
+            getChar();
+            while (charClass == LETTER || charClass == DIGIT) {  //adding char(letters or digit) to lexeme
+                addChar();
+                getChar();
+            }
+            nextToken = lookupReservedWords(lexeme); // STEP4: Putting our new function to use, checking if lexme is a reserved word
+            if (nextToken == 0) {
+                nextToken = IDENT; // If function returns 0, we default as Indentifer, which means its not a reserved word and most likey a user-defined name of a variable, function ,ect.
+            }
+            break;
+        case DIGIT:
+            addChar();
+            getChar();
+            while (charClass == DIGIT) {  //adding char(digit only) to lexeme
+                addChar();
+                getChar();
+            }
+            nextToken = INT_LIT; //the token is an Integer
+            break;
+        case UNKNOWN:            //unknown character
+            lookup(nextChar);
+            getChar();
+            break;
+        case EOF:
+            nextToken = EOF;  //end of file
+            lexeme[0] = 'E';
+            lexeme[1] = 'O';
+            lexeme[2] = 'F';
+            lexeme[3] = 0;
+            break;
+    }
 
-	if(0==strcmp(lexeme,"for")){
-		nextToken=FOR_CODE;
-	}
-
-	printf("Next token is : %d, Next lexeme is %s\n",nextToken, lexeme);
-	return nextToken;
+    printf("Next token is : %d, Next lexeme is %s\n", nextToken, lexeme);
+    return nextToken;
 }
 
 
